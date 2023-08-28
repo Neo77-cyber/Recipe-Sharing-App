@@ -1,6 +1,6 @@
 # Recipe-Sharing-App
 
-This is a web application for sharing and discovering recipes. Users can create, view, update, delete, save, search for recipes and create a shopping list, as well as browse recipes shared by other users.
+This is a nodeJS web application for sharing and discovering recipes. Users can create, view, update, delete, save, search for recipes and create a shopping list, as well as browse recipes shared by other users.
 
 ## Table of Contents
 
