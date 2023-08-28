@@ -38,17 +38,10 @@ const login = async (req,res) => {
     
 }
 
-const getSingleUser = async (req, res) => {
-    const {user:userId} =req
-    
 
-    const user = await User.findOne({userId})
-
-    res.status(StatusCodes.OK).json({user})
-}
 
 module.exports = {
-    register, login, getSingleUser
+    register, login
 }
    
 

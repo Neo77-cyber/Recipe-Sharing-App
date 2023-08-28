@@ -2,8 +2,8 @@ const Recipe = require('../models/recipe')
 const User = require('../models/auth')
 const {StatusCodes} = require('http-status-codes')
 const { BadRequestError, NotFoundError } = require('../errors')
-const cloudinary = require('cloudinary').v2
-const fs = require('fs')
+const cloudinary = require('cloudinary').v2;
+const fs = require('fs');
 
 
 
@@ -17,12 +17,28 @@ const CreateRecipe = async (req, res) => {
     res.status(StatusCodes.CREATED).json({recipe})
 }
 
-const getAllRecipe = async (req,res) => {
-
-    const recipes = await Recipe.find({}).sort({createdAt: 1})
-
-    res.status(StatusCodes.OK).json({recipes})
-}
+const getAllRecipe = async (req, res) => {
+    const page = parseInt(req.query.page) || 1; 
+    const itemsPerPage = parseInt(req.query.itemsPerPage) || 10; 
+  
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = page * itemsPerPage;
+  
+    const totalRecipes = await Recipe.countDocuments();
+  
+    const recipes = await Recipe.find({})
+      .sort({ createdAt: -1 }) 
+      .skip(startIndex)
+      .limit(itemsPerPage);
+  
+    const pagination = {
+      currentPage: page,
+      totalPages: Math.ceil(totalRecipes / itemsPerPage),
+    };
+  
+    res.status(StatusCodes.OK).json({ recipes, pagination });
+  };
+  
 
 
 const getSingleRecipe = async (req, res) => {
@@ -37,11 +53,20 @@ const getSingleRecipe = async (req, res) => {
       }).populate('createdBy', 'name')
 
       if (!recipe) {
-        throw new NotFoundError(`No job with id ${recipeId}`)
+        throw new NotFoundError(`No recipe with id ${recipeId}`)
       }
       res.status(StatusCodes.OK).json({ recipe })
 
   }
+
+const getUserRecipe = async (req, res) => {
+
+    const userRecipe = await Recipe.find({createdBy:req.user.userId}).sort('createdAt')
+
+    return res.status(StatusCodes.OK).json({userRecipe, count: userRecipe.length})
+
+}
+
 
 const updateRecipe = async (req, res) => {
     const {
@@ -109,14 +134,33 @@ const savedRecipe = async (req, res) => {
 const uploadRecipeImage = async (req, res) => {
     const result = await cloudinary.uploader.upload(
       req.files.image.tempFilePath,
+      
       {
         use_filename: true,
         folder: 'file-upload',
       }
+      
     );
+    
     fs.unlinkSync(req.files.image.tempFilePath);
     return res.status(StatusCodes.OK).json({ image: { src: result.secure_url } });
   };
+  
+const searchRecipe = async (req,res) => {
+    const {name} = req.query
+
+    if (!name) {
+        throw new BadRequestError('Please provide a name')
+    }
+
+    const recipe = await Recipe.find({name: { $regex: name, $options: 'i' }})
+
+    if (recipe.length === 0){
+        throw new NotFoundError('No recipe found with that name')
+    }
+    return res.status(StatusCodes.OK).json({recipe})
+
+}
 
 
 
@@ -124,4 +168,6 @@ const uploadRecipeImage = async (req, res) => {
 
 
 
-module.exports = {CreateRecipe, getAllRecipe, getSingleRecipe, updateRecipe, DeleteRecipe, savedRecipe, uploadRecipeImage}
+
+
+module.exports = {CreateRecipe, getAllRecipe, getSingleRecipe, updateRecipe, DeleteRecipe, savedRecipe, uploadRecipeImage, searchRecipe, getUserRecipe}

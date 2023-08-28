@@ -35,9 +35,9 @@ const RecipeSchema = new mongoose.Schema(
       required: [true, 'Please provide user'],
     },
     image: {
-        type: String,
-        required: true
-    }
+      type: String,
+      required: true,
+    },
   },
   { timestamps: true }
 )
